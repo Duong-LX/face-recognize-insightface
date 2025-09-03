@@ -1,0 +1,43 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual env / tools
+.venv/
+env/
+venv/
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs / outputs
+logs/
+outputs/
+*.log
+
+# Datasets (để trống repo; nếu muốn, giữ vài ảnh demo nhỏ)
+dataset/
+aligned_dataset/
+aligned_dataset_debug/
+landmarks/
+
+# Embeddings & models (dùng LFS nếu cần push)
+faces_embeddings.npz
+svm_face_recognizer.joblib
+svm_classes.npy
+svm_face_recognizer.onnx
+
+# Videos / images lớn
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.zip
+*.jpg
+*.jpeg
+*.png

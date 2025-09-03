@@ -1,0 +1,55 @@
+
+# Face Recognition Pipeline (InsightFace + SVM + Cosine Validation)
+
+## 1. Data Collection
+- Script: `data_collection.py`
+- Thu thập ảnh từ **camera** hoặc **video**.
+- Detect + crop khuôn mặt, lưu vào `dataset/<person_name>/`.
+- Hỗ trợ visualize bằng `utils/draw.draw_faces`.
+
+## 2. Preprocess & Embedding
+- Script: `preprocess.py` (sử dụng `config.py` để load dataset dir).
+- Align khuôn mặt (5-point landmarks).
+- Sinh embeddings bằng InsightFace (`embedding.py`).
+- Lưu thành `embeddings.npz` (X, y).
+
+## 3. Training SVM Classifier
+- Script: `train_svm.py`
+- Load embeddings từ `embeddings.npz`.
+- Train SVM (`linear`, `probability=True`).
+- Save model (`joblib`) vào `MODEL_PATH`.
+- Save class labels (`classes.npy`) vào `CLASSES_PATH`.
+
+## 4. Threshold Optimization (Cosine Similarity)
+- Script: `validate_cosine_threshold.py`
+- Split dữ liệu train/val.
+- Tính prototype vector mỗi class.
+- Dùng cosine similarity để chọn threshold tối ưu.
+- Cập nhật `THRESHOLD` trong `config.py`.
+- Retrain & save lại SVM.
+
+## 5. Recognition
+- Script: `recognize.py`
+- Input: camera, video, hoặc ảnh.
+- Detect → Align → Embedding → Predict (SVM).
+- Nếu `cosine_sim < THRESHOLD` → label = "others".
+- Output hiển thị + tùy chọn lưu ảnh/video.
+
+## 6. ONNX Export & Verification
+- Script: `convert_to_onnx.py`
+- Convert SVM sang ONNX (`svm_face_recognizer.onnx`).
+- Script: `tests.py` để verify predict (Sklearn vs ONNX).
+
+## 7. Utils
+- `utils/draw.py`: hỗ trợ vẽ box, landmarks, text, draw_faces.
+- `utils/preprocess.py`: align face.
+- `utils/embedding.py`: extract embeddings.
+
+## 8. Config
+- File: `config.py`
+- Chứa các tham số chính:
+  - `DATASET_DIR`, `ALIGNED_DIR`
+  - `EMB_PATH`, `MODEL_PATH`, `CLASSES_PATH`
+  - `THRESHOLD` (update sau validate_cosine_threshold)
+
+---

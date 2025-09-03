@@ -1,0 +1,8 @@
+numpy
+scikit-learn
+joblib
+onnx
+onnxruntime
+skl2onnx
+opencv-python
+matplotlib
