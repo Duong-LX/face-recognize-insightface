@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import json
+import time
 from face_detector import FaceDetector
 from config import DATASET_DIR, ALIGNED_DIR, EMB_PATH, LANDMARKS_DIR, DEBUG_DIR, SAVE_LANDMARKS, SAVE_DEBUG
 from utils.draw import draw_landmarks
@@ -13,10 +14,14 @@ if SAVE_LANDMARKS:
 if SAVE_DEBUG:
     os.makedirs(DEBUG_DIR, exist_ok=True)
 
+
 def preprocess_dataset():
     detector = FaceDetector()
     invalid = []
     X, y = [], []
+
+    total_imgs, total_faces = 0, 0
+    start_time = time.time()
 
     for person in os.listdir(DATASET_DIR):
         p_in = os.path.join(DATASET_DIR, person)
@@ -37,6 +42,7 @@ def preprocess_dataset():
             fpath = os.path.join(p_in, fname)
             if not os.path.isfile(fpath):
                 continue
+            total_imgs += 1
 
             try:
                 img = cv2.imread(fpath)
@@ -49,6 +55,7 @@ def preprocess_dataset():
                     invalid.append((fpath, "no face"))
                     continue
 
+                # lấy face có confidence cao nhất
                 face = max(faces, key=lambda f: float(getattr(f, "det_score", 0.0)))
                 kps = face.kps  # (5, 2)
                 aligned = face_align.norm_crop(img, kps)
@@ -78,19 +85,30 @@ def preprocess_dataset():
 
                 X.append(emb)
                 y.append(person)
+                total_faces += 1
 
             except Exception as e:
                 invalid.append((fpath, f"exception: {e}"))
 
+    elapsed = time.time() - start_time
     X = np.array(X)
     y = np.array(y)
     np.savez(EMB_PATH, X=X, y=y)
 
-    print(f"✅ Preprocess xong! Saved {EMB_PATH} với {len(X)} samples, {len(set(y))} classes.")
+    print("=== BENCHMARK: PREPROCESS DATASET ===")
+    print(f"📂 Tổng số ảnh: {total_imgs}")
+    print(f"🙂 Ảnh hợp lệ (có face + embedding): {total_faces}")
+    print(f"⚠️ Ảnh lỗi: {len(invalid)}")
+    print(f"⏱️ Thời gian: {elapsed:.2f}s")
+    print(f"⚡ Speed: {total_faces/elapsed:.2f} faces/sec" if total_faces > 0 else "⚡ Speed: 0")
+    print(f"💾 Embeddings saved to {EMB_PATH} ({len(X)} samples, {len(set(y))} classes)")
+    print("======================================")
+
     if invalid:
-        print("⚠️ Các file lỗi:")
-        for item in invalid:
+        print("⚠️ Danh sách file lỗi:")
+        for item in invalid[:20]:  # in tối đa 20 lỗi đầu
             print(" -", item[0], "=>", item[1])
+
 
 if __name__ == "__main__":
     preprocess_dataset()

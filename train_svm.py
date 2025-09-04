@@ -1,5 +1,6 @@
 import numpy as np
 import joblib
+import time
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder
@@ -23,12 +24,18 @@ def main():
     print("🔄 Training SVM classifier (linear kernel, probability=True)...")
     clf = SVC(kernel="linear", probability=True)
 
+    # Benchmark training time
+    start_time = time.time()
+
     # Cross-validation
     scores = cross_val_score(clf, X, y_enc, cv=5)
     print(f"📊 Cross-validation accuracy: {scores.mean():.4f} ± {scores.std():.4f}")
 
     # Fit final model on all data
     clf.fit(X, y_enc)
+
+    elapsed = time.time() - start_time
+    print(f"⏱️ Training time: {elapsed:.2f} seconds")
 
     # Save model
     joblib.dump(clf, MODEL_PATH)

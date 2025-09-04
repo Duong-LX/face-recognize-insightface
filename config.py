@@ -34,4 +34,4 @@ SAVE_DEBUG = True                     # Lưu ảnh debug trong bước preproces
 # ----------------------
 # Training & Inference
 # ----------------------
-THRESHOLD = 0.100
+THRESHOLD = 0.7
