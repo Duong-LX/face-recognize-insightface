@@ -2,10 +2,9 @@ import argparse
 import numpy as np
 from config import EMB_PATH
 from register_user_camera import register_user_camera
-from recognize import recognize_images, recognize_camera
-from train_svm import train_svm
-from validate_cosine_threshold import validate_threshold
-from verify_onnx import verify_onnx
+from recognize import run_images, run_video, FaceRecognizer
+from train_svm import main as train_svm_main
+import verify_onnx
 
 
 def main():
@@ -14,24 +13,24 @@ def main():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # ---- Register ----
-    reg_parser = subparsers.add_parser("register", help="Đăng ký user mới bằng camera/video")
-    reg_parser.add_argument("--user", type=str, required=True, help="Tên user mới (vd: duong)")
-    reg_parser.add_argument("--samples", type=int, default=50, help="Số ảnh cần thu thập")
-    reg_parser.add_argument("--video", type=str, default="0", help="Nguồn video: 0 = webcam, hoặc đường dẫn video")
+    reg_parser = subparsers.add_parser("register", help="Register user mới bằng camera/video")
+    reg_parser.add_argument("--user", type=str, required=True, help="New username (vd: duong)")
+    reg_parser.add_argument("--samples", type=int, default=50, help="Number images to collect")
+    reg_parser.add_argument("--video", type=str, default="0", help="Video source: 0 = webcam, or video path")
+    reg_parser.add_argument("--no_save_video", action="store_true", help="Don't save output video")
 
     # ---- Recognize ----
-    rec_parser = subparsers.add_parser("recognize", help="Nhận diện khuôn mặt")
-    rec_parser.add_argument("--images", nargs="+", help="Danh sách ảnh để nhận diện")
-    rec_parser.add_argument("--camera", action="store_true", help="Dùng camera thay vì ảnh")
+    rec_parser = subparsers.add_parser("recognize", help="Face Recognize ")
+    rec_parser.add_argument("--images", nargs="+", help="List of images to recognize")
+    rec_parser.add_argument("--video", type=str, help="Video path")
+    rec_parser.add_argument("--camera", type=int, help="camera index (vd: 0)")
+    rec_parser.add_argument("--no_save", action="store_true", help="Don't save output video")
 
     # ---- Retrain SVM ----
-    subparsers.add_parser("train", help="Train lại SVM từ embeddings")
-
-    # ---- Validate threshold ----
-    subparsers.add_parser("validate", help="Tính toán threshold cosine similarity tối ưu")
+    subparsers.add_parser("train", help="Retraining SVM from embeddings")
 
     # ---- Verify ONNX ----
-    subparsers.add_parser("verify", help="So sánh Sklearn vs ONNX outputs")
+    subparsers.add_parser("verify", help="Compare Sklearn vs ONNX outputs")
 
     args = parser.parse_args()
 
@@ -40,23 +39,29 @@ def main():
             video_source = int(args.video)
         except ValueError:
             video_source = args.video
-        register_user_camera(args.user, args.samples, video_source)
+        register_user_camera(
+            args.user,
+            num_samples=args.samples,
+            video_source=video_source,
+            save_video=not args.no_save_video,
+        )
 
     elif args.command == "recognize":
-        if args.camera:
-            recognize_camera()
-        elif args.images:
-            recognize_images(args.images)
+        recognizer = FaceRecognizer()
+        if args.images:
+            run_images(recognizer, args.images, save_output=not args.no_save)
+        elif args.video:
+            run_video(recognizer, args.video)
+        elif args.camera is not None:
+            run_video(recognizer, args.camera)
         else:
-            print("[ERROR] Cần truyền --images hoặc --camera")
+            print("[ERROR] You must provide --images, --video or --camera")
 
     elif args.command == "train":
         data = np.load(EMB_PATH)
         X, y = data["X"], data["y"]
-        train_svm(X, y)
-
-    elif args.command == "validate":
-        validate_threshold()
+        print(f"[INFO] Retraining SVM with {len(X)} samples...")
+        train_svm_main()
 
     elif args.command == "verify":
         verify_onnx()

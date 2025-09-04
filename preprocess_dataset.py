@@ -28,7 +28,7 @@ def preprocess_dataset():
         if not os.path.isdir(p_in):
             continue
 
-        # chuẩn bị output dirs
+        # Prepare output dirs
         p_out_aligned = os.path.join(ALIGNED_DIR, person)
         os.makedirs(p_out_aligned, exist_ok=True)
         p_out_landmarks = os.path.join(LANDMARKS_DIR, person) if SAVE_LANDMARKS else None
@@ -55,7 +55,7 @@ def preprocess_dataset():
                     invalid.append((fpath, "no face"))
                     continue
 
-                # lấy face có confidence cao nhất
+                # Get face having max confidence
                 face = max(faces, key=lambda f: float(getattr(f, "det_score", 0.0)))
                 kps = face.kps  # (5, 2)
                 aligned = face_align.norm_crop(img, kps)
@@ -96,17 +96,17 @@ def preprocess_dataset():
     np.savez(EMB_PATH, X=X, y=y)
 
     print("=== BENCHMARK: PREPROCESS DATASET ===")
-    print(f"📂 Tổng số ảnh: {total_imgs}")
-    print(f"🙂 Ảnh hợp lệ (có face + embedding): {total_faces}")
-    print(f"⚠️ Ảnh lỗi: {len(invalid)}")
-    print(f"⏱️ Thời gian: {elapsed:.2f}s")
+    print(f"📂 Number images: {total_imgs}")
+    print(f"🙂 Valid Images ( face + embedding): {total_faces}")
+    print(f"⚠️ Invalid Images: {len(invalid)}")
+    print(f"⏱️ Execution time: {elapsed:.2f}s")
     print(f"⚡ Speed: {total_faces/elapsed:.2f} faces/sec" if total_faces > 0 else "⚡ Speed: 0")
     print(f"💾 Embeddings saved to {EMB_PATH} ({len(X)} samples, {len(set(y))} classes)")
     print("======================================")
 
     if invalid:
-        print("⚠️ Danh sách file lỗi:")
-        for item in invalid[:20]:  # in tối đa 20 lỗi đầu
+        print("⚠️ List errors:")
+        for item in invalid[:20]: 
             print(" -", item[0], "=>", item[1])
 
 

@@ -93,7 +93,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--person", type=str, required=True, help="Tên người cần thu thập")
     parser.add_argument("--video", type=str, default=None, help="Video file path (nếu có)")
-    parser.add_argument("--num_samples", type=int, default=100, help="Số ảnh muốn thu thập")
+    parser.add_argument("--num_samples", type=int, default=100, help="Số image muốn thu thập")
     parser.add_argument("--interval", type=int, default=5, help="Chu kỳ lưu (frame)")
     args = parser.parse_args()
 
